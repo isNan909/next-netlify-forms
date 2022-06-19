@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
 
-type formType = {
+type formData = {
   fullName: string;
   companyEmail: string;
   phoneNumber: string;
@@ -36,14 +36,23 @@ const Home: NextPage = () => {
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm<formType>({
+  } = useForm<formData>({
     mode: 'onChange',
     resolver: yupResolver(validateSchema),
   });
 
-  const onSubmit = (data: formType) => {
-    //serverless netlify function call here
-    console.log(JSON.stringify(data), 'sucessfully submitted');
+  const onSubmit = async (data: formData) => {
+    try {
+      const response = await fetch('http://localhost:8888/.netlify/functions/formSubmit', {
+        method: 'POST',
+        body: JSON.stringify({
+          query: data,
+        }),
+      });
+      console.log(response,'Form submitted successfully');
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   return (
