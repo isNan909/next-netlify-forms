@@ -20,9 +20,6 @@ var __spreadValues = (a, b) => {
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
-var __esm = (fn, res) => function __init() {
-  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
-};
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -21438,7 +21435,7 @@ var require_connect = __commonJS({
       [providers_1.AuthMechanism.MONGODB_SCRAM_SHA256, new scram_1.ScramSHA256()],
       [providers_1.AuthMechanism.MONGODB_X509, new x509_1.X509()]
     ]);
-    function connect3(options, callback) {
+    function connect2(options, callback) {
       makeConnection(__spreadProps(__spreadValues({}, options), { existingSocket: void 0 }), (err, socket) => {
         var _a;
         if (err || !socket) {
@@ -21451,7 +21448,7 @@ var require_connect = __commonJS({
         performInitialHandshake(new ConnectionType(socket, options), options, callback);
       });
     }
-    exports.connect = connect3;
+    exports.connect = connect2;
     function checkSupportedServer(hello, options) {
       var _a;
       const serverVersionHighEnough = hello && (typeof hello.maxWireVersion === "number" || hello.maxWireVersion instanceof bson_1.Int32) && hello.maxWireVersion >= constants_2.MIN_SUPPORTED_WIRE_VERSION;
@@ -23556,7 +23553,7 @@ var require_connect2 = __commonJS({
     var constants_1 = require_constants3();
     var error_1 = require_error();
     var topology_1 = require_topology();
-    function connect3(mongoClient, options, callback) {
+    function connect2(mongoClient, options, callback) {
       if (!callback) {
         throw new error_1.MongoInvalidArgumentError("Callback function must be provided");
       }
@@ -23586,7 +23583,7 @@ var require_connect2 = __commonJS({
       }
       return createTopology(mongoClient, options, connectCallback);
     }
-    exports.connect = connect3;
+    exports.connect = connect2;
     function createTopology(mongoClient, options, callback) {
       const topology = new topology_1.Topology(options.hosts, options);
       mongoClient.topology = topology;
@@ -26642,54 +26639,45 @@ var require_lib3 = __commonJS({
   }
 });
 
-// utils/database.ts
-var database_exports = {};
-__export(database_exports, {
-  connect: () => connect
-});
-async function connect() {
-  if (!client.isConnected())
-    await client.connect();
-  const db = client.db("netlify-forms");
-  return { db, client };
-}
-var MongoClient, client;
-var init_database = __esm({
-  "utils/database.ts"() {
-    MongoClient = require_lib3().MongoClient;
-    client = new MongoClient(process.env.DB_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
-  }
-});
-
-// functions/formSubmit.js
+// functions/formSubmit.ts
 var formSubmit_exports = {};
 __export(formSubmit_exports, {
   handler: () => handler
 });
-var connect2 = (init_database(), __toCommonJS(database_exports));
-async function handler(event) {
-  const { query } = JSON.parse(event.body);
-  try {
-    const { fullName, companyEmail, phoneNumber, companyWebsite, companySize } = query;
-    console.log(fullName, companyEmail, phoneNumber, companyWebsite, companySize);
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        message: "Your form has been submitted successfully!"
-      })
-    };
-  } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        message: "Something went wrong!"
-      })
-    };
-  }
+
+// utils/database.ts
+var MongoClient = require_lib3().MongoClient;
+var client = new MongoClient(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+async function connect() {
+  if (!client.connect())
+    await client.connect();
+  const db = client.db("netlify-forms");
+  return { db, client };
 }
+
+// functions/formSubmit.ts
+var handler = async (event) => {
+  const { query } = JSON.parse(event.body);
+  const { fullName, companyEmail, phoneNumber, companyWebsite, companySize } = query;
+  const { db } = await connect();
+  await db.collection("contact").insertOne({
+    contacts: {
+      Name: fullName,
+      Email: companyEmail,
+      Phone: phoneNumber,
+      Website: companyWebsite,
+      Size: companySize
+    },
+    createdAt: new Date()
+  });
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ message: `ok` })
+  };
+};
 module.exports = __toCommonJS(formSubmit_exports);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

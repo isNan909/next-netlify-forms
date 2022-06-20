@@ -43,15 +43,26 @@ const Home: NextPage = () => {
 
   const onSubmit = async (data: formData) => {
     try {
-      const response = await fetch('http://localhost:8888/.netlify/functions/formSubmit', {
-        method: 'POST',
-        body: JSON.stringify({
-          query: data,
-        }),
-      });
-      console.log(response,'Form submitted successfully');
+      const response = await fetch(
+        'http://localhost:8888/.netlify/functions/formSubmit',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            query: data,
+          }),
+        }
+      );
+      console.log(response, 'Form submitted successfully');
     } catch (err) {
       console.log(err);
+    }
+    finally{
+      setValue('fullName', '');
+      setValue('companyEmail', '');
+      setValue('phoneNumber', '');
+      setValue('companyWebsite', '');
+      setValue('companySize', '');
+      setValue('acceptTerms', false);
     }
   };
 
